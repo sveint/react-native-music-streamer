@@ -1,0 +1,39 @@
+{
+  "author": {
+    "name": "sveint"
+  },
+  "bugs": {
+    "url": "https://github.com/sveint/react-native-music-streamer/issues"
+  },
+  "dependencies": {},
+  "description": "A feature-rich react-native audio streaming module (currently Android only)",
+  "devDependencies": {},
+  "directories": {},
+  "homepage": "https://github.com/sveint/react-native-music-streamer#readme",
+  "keywords": [
+    "react-native",
+    "streaming",
+    "music",
+    "android",
+    "media",
+    "player"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "maintainers": [
+    {
+      "name": "sveint",
+      "email": "sveint@gmail.com"
+    }
+  ],
+  "name": "react-native-music-streamer",
+  "optionalDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sveint/react-native-music-streamer.git"
+  },
+  "scripts": {
+    "start": "node node_modules/react-native/local-cli/cli.js start"
+  },
+  "version": "0.0.1"
+}
