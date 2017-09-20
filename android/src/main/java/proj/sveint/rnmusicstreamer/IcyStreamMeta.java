@@ -7,6 +7,9 @@ package proj.sveint.rnmusicstreamer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.String;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
@@ -140,7 +143,7 @@ public class IcyStreamMeta {
         int count = 0;
         int metaDataLength = 4080; // 4080 is the max length
         boolean inData = false;
-        StringBuilder metaData = new StringBuilder();
+        ByteBuffer metaDataRaw = ByteBuffer.allocate(4080);
         // Stream position should be either at the beginning or right after headers
         while ((b = stream.read()) != -1) {
             count++;
@@ -157,7 +160,7 @@ public class IcyStreamMeta {
             }
             if (inData) {
                 if (b != 0) {
-                    metaData.append((char)b);
+                    metaDataRaw.put((byte)b);
                 }
             }
             if (count > (metaDataOffset + metaDataLength)) {
@@ -166,8 +169,14 @@ public class IcyStreamMeta {
 
         }
 
+        String metaData = new String(
+            metaDataRaw.array(),
+            metaDataRaw.arrayOffset(),
+            metaDataRaw.position() - metaDataRaw.arrayOffset(),
+            Charset.forName("UTF-8")
+        );
         // Set the data
-        metadata = IcyStreamMeta.parseMetadata(metaData.toString());
+        metadata = IcyStreamMeta.parseMetadata(metaData);
 
         // Close
         stream.close();
@@ -190,7 +199,7 @@ public class IcyStreamMeta {
     public static Map<String, String> parseMetadata(String metaString) {
         Map<String, String> metadata = new HashMap();
         String[] metaParts = metaString.split(";");
-        Pattern p = Pattern.compile("^([a-zA-Z]+)=\\'([^\\']*)\\'$");
+        Pattern p = Pattern.compile("^([a-zA-Z]+)=\\'(.*)\\'$");
         Matcher m;
         for (int i = 0; i < metaParts.length; i++) {
             m = p.matcher(metaParts[i]);

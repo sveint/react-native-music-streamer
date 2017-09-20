@@ -48,7 +48,7 @@ public class MetadataUpdater {
                     icy.refreshMeta();
                     return icy.getFullTitle();
                 }
-                catch(IOException e) {
+                catch(Exception e) {
                     Log.e("MusicStreamer", "Error while fetching metadata", e);
                 }
             }
