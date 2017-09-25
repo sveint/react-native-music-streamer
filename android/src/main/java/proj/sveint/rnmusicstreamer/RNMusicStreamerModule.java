@@ -250,7 +250,7 @@ public class RNMusicStreamerModule extends ReactContextBaseJavaModule {
 
             }
         } catch(IOException ex) {
-            Log.w("MusicControl", "Could not load the artwork", ex);
+            Log.w("MusicStreamer", "Could not load the artwork", ex);
         }
         
         return bitmap;

@@ -99,8 +99,8 @@ public class MusicStreamerService extends Service implements ExoPlayer.EventList
     public void onCreate() {
 
         // Register for audiofocus (phone calls etc)
-         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-         audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
         // Handle polling for metadata (title) from stream
         metadataUpdater = new MetadataUpdater();
