@@ -112,3 +112,5 @@ DeviceEventEmitter.addListener(
 
 This project is built upon [react-native-audio-streamer](https://github.com/indiecastfm/react-native-audio-streamer) (MIT), adding more functionality for Android.
 
+Icons by [Font Awesome](http://fontawesome.io/).
+
