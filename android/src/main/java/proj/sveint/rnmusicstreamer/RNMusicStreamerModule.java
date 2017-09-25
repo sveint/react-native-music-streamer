@@ -141,7 +141,9 @@ public class RNMusicStreamerModule extends ReactContextBaseJavaModule {
                     @Override
                     public void run() {
                         Bitmap bitmap = loadArtwork(artworkUrl, artworkLocal);
-                        bitmap = createSquaredBitmap(bitmap);
+                        if (bitmap != null) {
+                            bitmap = createSquaredBitmap(bitmap);
+                        }
                         musicService.setNotification(title, artist, album, bitmap);
                         musicService.updateNotification();
                         artworkThread = null;

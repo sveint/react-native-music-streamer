@@ -56,13 +56,17 @@ import java.util.Map;
 public class MusicStreamerService extends Service implements ExoPlayer.EventListener, BandwidthMeter.EventListener, ExtractorMediaSource.EventListener, AudioManager.OnAudioFocusChangeListener {
 
     private final IBinder binder = new LocalBinder();
-    
+
     // Notification / MediaSession
     private NotificationCompat.Builder nb;
+    private MediaSessionCompat mediaSession;
     private final int N_ID = 10;
     private MetadataUpdater metadataUpdater;
     private MetadataUpdateListener metadataUpdateListener;
     private boolean metaFromStream = false;
+    static final String MEDIA_BUTTON = "NRMS_MEDIA_BUTTON";
+    static final String MEDIA_ACTION = "NRMS_MEDIA_ACTION";
+    private MusicStreamerNotificationReceiver notificationReceiver;
 
     // Player
     private SimpleExoPlayer player = null;
@@ -113,6 +117,9 @@ public class MusicStreamerService extends Service implements ExoPlayer.EventList
                 }
             }
         );
+
+        notificationReceiver = new MusicStreamerNotificationReceiver(this);
+        registerReceiver(notificationReceiver, new IntentFilter(MEDIA_BUTTON));
     }
 
     @Override
@@ -120,6 +127,7 @@ public class MusicStreamerService extends Service implements ExoPlayer.EventList
         audioManager.abandonAudioFocus(this);
         try {
             unregisterReceiver(audioNoisyReceiver);
+            unregisterReceiver(notificationReceiver);
         }
         catch (IllegalArgumentException e) {}
     }
@@ -136,10 +144,9 @@ public class MusicStreamerService extends Service implements ExoPlayer.EventList
     }
 
     public void prepare(String urlString) {
-        
+
         this.currentUrl = urlString;
-        nb = new NotificationCompat.Builder(this);
-        
+
         if (player != null){
             player.stop();
             player = null;
@@ -200,6 +207,7 @@ public class MusicStreamerService extends Service implements ExoPlayer.EventList
     public void stop() {
         if (player != null){
             player.stop();
+            player.seekTo(0);  // Position isn't reset by stop()
             status = "STOPPED";
             try {
                 unregisterReceiver(audioNoisyReceiver);
@@ -242,7 +250,7 @@ public class MusicStreamerService extends Service implements ExoPlayer.EventList
         } else {
             play();
         }
-    }   
+    }
 
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
@@ -251,24 +259,29 @@ public class MusicStreamerService extends Service implements ExoPlayer.EventList
         switch (playbackState) {
             case ExoPlayer.STATE_IDLE:
                 status = STOPPED;
+                setNotificationButton(false);
                 emitStatusUpdate();
                 break;
             case ExoPlayer.STATE_BUFFERING:
                 status = BUFFERING;
                 emitStatusUpdate();
+                setNotificationButton(true);
                 break;
             case ExoPlayer.STATE_READY:
                 if (this.player != null && this.player.getPlayWhenReady()) {
                     status = PLAYING;
                     emitStatusUpdate();
+                    setNotificationButton(true);
                 } else {
                     status = PAUSED;
                     emitStatusUpdate();
+                    setNotificationButton(false);
                 }
                 break;
             case ExoPlayer.STATE_ENDED:
                 status = FINISHED;
                 emitStatusUpdate();
+                setNotificationButton(false);
                 break;
         }
     }
@@ -381,9 +394,8 @@ public class MusicStreamerService extends Service implements ExoPlayer.EventList
         // Create MediaSession
         //ComponentName compName = new ComponentName(this, MusicControlReceiver.class);
 
-        MediaSessionCompat session;
-        session = new MediaSessionCompat(this, "MusicStreamer");
-        session.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
+        mediaSession = new MediaSessionCompat(this, "MusicStreamer");
+        mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
                 MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
         // TODO: Add callbacks
 
@@ -398,30 +410,51 @@ public class MusicStreamerService extends Service implements ExoPlayer.EventList
         else {
             md.putBitmap(MediaMetadataCompat.METADATA_KEY_ART, null);
         }
-        
-        // Create media notification with the MediaMetadata
-        nb.setStyle(
-            new NotificationCompat.MediaStyle()
-                .setMediaSession(session.getSessionToken())
-        );
-        // .setShowActionsInCompactView(0)
 
-        String packageName = getPackageName();
-        Intent openApp = getPackageManager().getLaunchIntentForPackage(packageName);
-        nb.setContentIntent(PendingIntent.getActivity(this, 0, openApp, 0));
-        nb.setContentTitle(title);
-        nb.setContentText(artist);
-        nb.setContentInfo(album);
+        // Create media notification with the MediaMetadata
+        NotificationCompat.Builder newNb = new NotificationCompat.Builder(this);
+        newNb.setStyle(
+            new NotificationCompat.MediaStyle()
+                .setMediaSession(mediaSession.getSessionToken())
+        );
+
+        Intent openApp = getPackageManager().getLaunchIntentForPackage(getPackageName());
+        newNb.setContentIntent(PendingIntent.getActivity(this, 0, openApp, 0));
+        newNb.setContentTitle(title);
+        newNb.setContentText(artist);
+        newNb.setContentInfo(album);
         if (artwork != null) {
-            nb.setLargeIcon(artwork);
+            newNb.setLargeIcon(artwork);
         }
         else {
-            nb.setLargeIcon(null);
+            newNb.setLargeIcon(null);
         }
-        nb.setSmallIcon(getResources().getIdentifier("play", "drawable", getPackageName()));
-        nb.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
-        nb.setShowWhen(false);
-        session.setMetadata(md.build());
+        newNb.setSmallIcon(getResources().getIdentifier("play_white", "drawable", getPackageName()));
+        newNb.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+        newNb.setShowWhen(false);
+
+        nb = newNb;
+        mediaSession.setMetadata(md.build());
+        mediaSession.setActive(true);
+
+    }
+
+    public void setNotificationButton(boolean isPlaying) {
+        Intent intent = new Intent(MEDIA_BUTTON);
+        intent.putExtra(MEDIA_ACTION, isPlaying ? "STOP" : "PLAY");
+        PendingIntent pi = PendingIntent.getBroadcast(this, 123, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        nb.mActions.clear();
+        int actionIcon = getResources().getIdentifier(isPlaying ? "stop" : "play", "drawable", getPackageName());
+        nb.addAction(actionIcon, isPlaying ? "Stop" : "Play", pi);
+
+        // we need to set the style again due to setShowActionInCompactView...
+        nb.setStyle(
+            new NotificationCompat.MediaStyle()
+                .setMediaSession(mediaSession.getSessionToken())
+                .setShowActionsInCompactView(0)
+        );
+        updateNotification();
     }
 
     public void enableMetadataFromStream(boolean enable) {
