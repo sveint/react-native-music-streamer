@@ -105,7 +105,6 @@ DeviceEventEmitter.addListener(
 ## TODO
 
 - Code cleanup
-- Add play/stop buttons to notification
 - Add bandwith usage data
 
 ## Credits
