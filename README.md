@@ -106,6 +106,7 @@ DeviceEventEmitter.addListener(
 
 - Code cleanup
 - Add bandwith usage data
+- Better handling of service lifecycle (it now lives as long as the module)
 
 ## Credits
 
