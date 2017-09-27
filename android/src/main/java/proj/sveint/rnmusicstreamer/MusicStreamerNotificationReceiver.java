@@ -18,11 +18,11 @@ public class MusicStreamerNotificationReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
 
-        if (intent.hasExtra("PACKAGE_NAME")) {
-            if (!intent.getStringExtra("PACKAGE_NAME").equals(packageName)) {
-                return;
-            }
+        if (!intent.hasExtra("PACKAGE_NAME") ||
+            !intent.getStringExtra("PACKAGE_NAME").equals(packageName)) {
+            return;
         }
+
         if (MusicStreamerService.MEDIA_BUTTON.equals(intent.getAction())) {
             if (intent.hasExtra(MusicStreamerService.MEDIA_ACTION)) {
                 String mediaAction = intent.getStringExtra(MusicStreamerService.MEDIA_ACTION);

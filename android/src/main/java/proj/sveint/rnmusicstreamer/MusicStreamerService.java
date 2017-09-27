@@ -441,6 +441,7 @@ public class MusicStreamerService extends Service implements ExoPlayer.EventList
 
     public void setNotificationButton(boolean isPlaying) {
         Intent intent = new Intent(MEDIA_BUTTON);
+        intent.putExtra("PACKAGE_NAME", getPackageName());
         intent.putExtra(MEDIA_ACTION, isPlaying ? "STOP" : "PLAY");
         PendingIntent pi = PendingIntent.getBroadcast(this, 123, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
