@@ -85,6 +85,7 @@ public class MusicStreamerService extends Service implements ExoPlayer.EventList
     private StatusUpdateListener statusUpdateListener;
 
     // System
+    private boolean lossWasTransient = false;
     private AudioManager audioManager;
     private final BroadcastReceiver audioNoisyReceiver =
             new BroadcastReceiver() {
@@ -246,17 +247,25 @@ public class MusicStreamerService extends Service implements ExoPlayer.EventList
     public double getDuration() {
         if (player == null){
             return (double)0;
-        }else{
+        } else {
             return (double)(player.getDuration()/1000);
         }
     }
 
     @Override
     public void onAudioFocusChange(int focusChange) {
-        if(focusChange <= 0) {
+        if(focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT ||
+           focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+            lossWasTransient = true;
             stop();
-        } else {
-            play();
+        } else if(focusChange < 0) {
+            lossWasTransient = false;
+            stop();
+        } else if (focusChange > 0) {
+            if (lossWasTransient) {
+                prepare(currentUrl);
+                play();
+            }
         }
     }
 
