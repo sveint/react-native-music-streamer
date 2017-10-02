@@ -271,36 +271,26 @@ public class MusicStreamerService extends Service implements ExoPlayer.EventList
 
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-        Log.d("onPlayerStateChanged", ""+playbackState);
 
         switch (playbackState) {
             case ExoPlayer.STATE_IDLE:
                 status = STOPPED;
-                setNotificationButton(false);
-                emitStatusUpdate();
                 break;
             case ExoPlayer.STATE_BUFFERING:
                 status = BUFFERING;
-                emitStatusUpdate();
-                setNotificationButton(true);
                 break;
             case ExoPlayer.STATE_READY:
                 if (this.player != null && this.player.getPlayWhenReady()) {
                     status = PLAYING;
-                    emitStatusUpdate();
-                    setNotificationButton(true);
                 } else {
                     status = PAUSED;
-                    emitStatusUpdate();
-                    setNotificationButton(false);
                 }
                 break;
             case ExoPlayer.STATE_ENDED:
                 status = FINISHED;
-                emitStatusUpdate();
-                setNotificationButton(false);
                 break;
         }
+
         emitStatusUpdate();
         if (status == BUFFERING ||
             status == PLAYING) {
