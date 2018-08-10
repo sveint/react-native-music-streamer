@@ -12,11 +12,7 @@ A react-native audio streaming module **(for Android only)**, using [ExoPlayer](
 
 ## Installation
 
-`npm install react-native-music-streamer --save`
-
-Then run the following command to link to your Android project
-
-`react-native link react-native-music-streamer`
+TODO
 
 ## Usage
 
