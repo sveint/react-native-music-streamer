@@ -2,6 +2,8 @@
 
 A react-native audio streaming module **(for Android only)**, using [ExoPlayer](https://github.com/google/ExoPlayer).
 
+## THIS IS NOT PRODUCTION READY. Last I recall things are a bit broken. Feel free to build upon it, but use at own risk.
+
 ## Features
 
 - Music playback using foreground service
